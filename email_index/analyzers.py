@@ -1,6 +1,8 @@
 import email.utils
 
+import bleach
 from whoosh.analysis import RegexTokenizer, LowercaseFilter
+from whoosh.analysis.tokenizers import default_pattern
 
 
 def clean_str(value):
@@ -26,9 +28,9 @@ class EmailAddressTokenizer(RegexTokenizer):
     """Splits email address lists from raw email headers into individual tokens.
     Names are split, as well as address/domain combinations"""
 
-    default_pattern = r"[^ \t\r\n]+"
+    email_default_pattern = r"[^ \t\r\n]+"
 
-    def __init__(self, pattern=default_pattern, gaps=False):
+    def __init__(self, pattern=email_default_pattern, gaps=False):
         super(EmailAddressTokenizer, self).__init__(pattern, gaps=gaps)
 
     def __call__(self, addresses, **kwargs):
@@ -37,3 +39,4 @@ class EmailAddressTokenizer(RegexTokenizer):
         addresses = [x for x in addresses if x != ('', '')]
         addresses = flatten_addrs(addresses)
         return super(EmailAddressTokenizer, self).__call__(addresses, positions=True)
+
