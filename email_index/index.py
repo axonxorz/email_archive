@@ -6,6 +6,7 @@ import base64
 import quopri
 from email.parser import Parser
 
+import bleach
 import whoosh.index
 from whoosh.writing import BufferedWriter
 
@@ -36,7 +37,7 @@ def update_index():
     message_parser = Parser()
     ix = get_index()
 
-    writer = ix.writer()
+    writer = BufferedWriter(ix, limit=50)
     try:
         documents_path = config.DOCUMENTS_DIR
         for root, dirs, files in os.walk(documents_path):
@@ -46,7 +47,6 @@ def update_index():
 
                 with open(file_path, 'rb') as fd:
                     message = message_parser.parse(fd)
-                    headers = message.keys()
 
                     try:
                         message_id = message['Message-Id']
@@ -86,10 +86,15 @@ def update_index():
                                     print file_path
                                     print 'No charset specified, could not decode body_text as UTF-8, skipping', e
                                     continue
+
+                            if 'text/html' in msg_body.get('Content-Type', 'application/octet-stream'):
+                                body_text = bleach.clean(body_text, tags=[], attributes={}, styles=[], strip=True)
+
                         else:
                             print 'Could not find body for {}'.format(message_id)
                             body_text = None
-                    except ValueError, e:
+                    except Exception, e:
+                        # TODO: traceback is swallowed here
                         print 'Unhandled exception', file_path
                         raise e
 
@@ -109,3 +114,4 @@ def update_index():
                     print 'Indexed {}'.format(message_id)
     finally:
         writer.commit()
+        writer.close()
