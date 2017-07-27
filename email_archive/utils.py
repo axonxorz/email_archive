@@ -1,6 +1,7 @@
 import os
 import email.utils
 import email.parser
+from gzip import open as gzip_open
 
 import arrow
 
@@ -15,8 +16,16 @@ def msg_from_hit(hit):
     """Return an email.Message based on the path in a given Whoosh Hit object"""
     path = os.path.join(Configuration.ARCHIVE_DIR, hit['path'])
     parser = email.parser.Parser()
-    with open(path, 'rb') as fd:
+    fd = None
+    try:
+        if path.endswith('.gz'):
+            fd = gzip_open(path, 'rb')
+        else:
+            fd = open(path, 'rb')
         return parser.parse(fd)
+    finally:
+        if fd:
+            fd.close()
 
 
 def email_get_body(message):

@@ -6,6 +6,7 @@ import base64
 import quopri
 from email.parser import Parser
 import logging
+from gzip import open as gzip_open
 
 import bleach
 import whoosh.index
@@ -37,6 +38,9 @@ def get_index():
 def process_message(message_path, message, writer):
     """Process a single email.Message object into the index"""
     message_id = message['Message-Id']
+    if message_id is None:
+        logger.warn('Skipping {}, could not find a Message-Id, probably an error parsing'.format(message_path))
+        return False
     msg_subject = message.get('Subject', '')
     msg_date = emaildate_to_arrow(message['Date']).naive
     msg_from = message['From']
@@ -82,7 +86,7 @@ def process_message(message_path, message, writer):
         body_text = None
 
     writer.update_document(message_id=message_id.decode('utf8'),
-                           path=message_path,
+                           path=message_path.decode('utf8'),
                            from_addr=msg_from.decode('utf8'),
                            to_addr=msg_to.decode('utf8'),
                            has_attachments=msg_has_attachments and u'yes' or u'no',
@@ -105,15 +109,22 @@ def update_index(subtree=None):
         for root, dirs, files in os.walk(tree_root):
             for filename in files:
                 file_path = os.path.join(root, filename)
-                message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/').decode('utf8')
+                message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')
 
-                with open(file_path, 'rb') as fd:
-                    try:
-                        message = message_parser.parse(fd)
-                        process_message(message_path, message, writer)
-                    except Exception, e:
-                        logger.exception('Unhandled exception processing {}'.format(file_path))
-                        continue
+                fd = None
+                try:
+                    if file_path.endswith('.gz'):
+                        fd = gzip_open(file_path, 'rb')
+                    else:
+                        fd = open(file_path, 'rb')
+                    message = message_parser.parse(fd)
+                    process_message(message_path, message, writer)
+                except Exception, e:
+                    logger.exception('Unhandled exception processing {}'.format(file_path))
+                    continue
+                finally:
+                    if fd:
+                        fd.close()
 
     finally:
         writer.commit()
