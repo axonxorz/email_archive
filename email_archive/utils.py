@@ -4,7 +4,7 @@ import email.parser
 
 import arrow
 
-from . import config
+from .config import Configuration
 
 
 def emaildate_to_arrow(date):
@@ -13,7 +13,7 @@ def emaildate_to_arrow(date):
 
 def msg_from_hit(hit):
     """Return an email.Message based on the path in a given Whoosh Hit object"""
-    path = os.path.join(config.DOCUMENTS_DIR, hit['path'])
+    path = os.path.join(Configuration.ARCHIVE_DIR, hit['path'])
     parser = email.parser.Parser()
     with open(path, 'rb') as fd:
         return parser.parse(fd)

@@ -11,7 +11,7 @@ import bleach
 import whoosh.index
 from whoosh.writing import BufferedWriter
 
-from . import config
+from .config import Configuration
 from .email_schema import email_schema
 from .utils import emaildate_to_arrow, email_get_body, email_has_attachments
 
@@ -20,18 +20,18 @@ logger = logging.getLogger(__name__)
 
 
 def create_index():
-    if not os.path.exists(config.INDEX_DIR):
-        os.mkdir(config.INDEX_DIR)
-    if whoosh.index.exists_in(config.INDEX_DIR):
-        logger.warn('Index already exists in {}, refusing to clear it.'.format(config.INDEX_DIR))
+    if not os.path.exists(Configuration.INDEX_DIR):
+        os.mkdir(Configuration.INDEX_DIR)
+    if whoosh.index.exists_in(Configuration.INDEX_DIR):
+        logger.warn('Index already exists in {}, refusing to clear it.'.format(Configuration.INDEX_DIR))
         return False
-    ix = whoosh.index.create_in(config.INDEX_DIR, email_schema)
-    logger.info('Created index in {}'.format(config.INDEX_DIR))
+    ix = whoosh.index.create_in(Configuration.INDEX_DIR, email_schema)
+    logger.info('Created index in {}'.format(Configuration.INDEX_DIR))
     return True
 
 
 def get_index():
-    return whoosh.index.open_dir(config.INDEX_DIR)
+    return whoosh.index.open_dir(Configuration.INDEX_DIR)
 
 
 def process_message(message_path, message, writer):
@@ -98,14 +98,14 @@ def update_index(subtree=None):
 
     writer = BufferedWriter(ix, limit=50)
     try:
-        tree_root = config.DOCUMENTS_DIR
+        tree_root = Configuration.ARCHIVE_DIR
         if subtree:
             tree_root = os.path.join(tree_root, subtree)
-        documents_path = config.DOCUMENTS_DIR
+        documents_path = Configuration.ARCHIVE_DIR
         for root, dirs, files in os.walk(tree_root):
             for filename in files:
                 file_path = os.path.join(root, filename)
-                message_path = file_path.replace(config.DOCUMENTS_DIR, '').lstrip('/').decode('utf8')
+                message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/').decode('utf8')
 
                 with open(file_path, 'rb') as fd:
                     try:

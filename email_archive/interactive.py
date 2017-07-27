@@ -9,10 +9,10 @@ import whoosh.qparser
 
 from IPython import embed
 
-import config
-import index
-import utils
-from email_schema import email_schema
+from .config import Configuration
+from . import index
+from . import utils
+from .email_schema import email_schema
 
 
 embed()
