@@ -1,0 +1,5 @@
+arrow==0.10.0
+bleach==2.0.0
+html5lib==0.999999999
+ipython
+Whoosh==2.7.4
