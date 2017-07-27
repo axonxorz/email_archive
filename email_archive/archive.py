@@ -8,6 +8,7 @@ import time
 import datetime
 import tempfile
 import hashlib
+from gzip import open as gzip_open
 
 import logging
 
@@ -70,9 +71,9 @@ def archive_message(message):
 
         messagetime = archive_date.strftime('%H%M')
         hash_id = hashlib.md5(message_id).hexdigest()
-        archive_path = os.path.join(archive_path, messagetime + '-' + hash_id + '.eml')
+        archive_path = os.path.join(archive_path, messagetime + '-' + hash_id + '.eml.gz')
         logger.debug('Archiving to {}'.format(archive_path))
-        with open(archive_path, 'wb') as fd:
+        with gzip_open(archive_path, 'wb') as fd:
             fd.write(str(message))
 
         return archive_path
