@@ -1,0 +1,2 @@
+include versioneer.py
+include email_archive/_version.py

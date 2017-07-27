@@ -2,3 +2,6 @@ _index
 documents
 
 *.egg-info
+
+build
+dist

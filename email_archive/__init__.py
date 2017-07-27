@@ -5,4 +5,6 @@ from .email_schema import email_schema
 from .index import create_index, update_index
 
 
-__version__ = '0.1'
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
