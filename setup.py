@@ -47,7 +47,7 @@ setup(
     data_files=[],
     entry_points=dict(
         console_scripts=[
-            'email_archive=email_archive.cli:cli'
+            'email-archive-message=email_archive.archive:main'
         ]
     ),
 )

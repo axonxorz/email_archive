@@ -28,6 +28,7 @@ class _Configuration(object):
 
     _ARCHIVE_DIR = None
     _INDEX_DIR = None
+    _ARCHIVED_DOMAINS = None
 
     def configure(self):
         """Attempt to configure the application using various configuration paths"""
@@ -44,6 +45,7 @@ class _Configuration(object):
             conf = yaml.load(fd)
         self._ARCHIVE_DIR = conf['main']['archive_dir']
         self._INDEX_DIR = conf['main']['index_dir']
+        self._ARCHIVED_DOMAINS = conf['main'].get('archived_domains', [])
         self._loaded = path
 
     def __repr__(self):
@@ -61,6 +63,11 @@ class _Configuration(object):
     @wrap_load
     def INDEX_DIR(self):
         return self._INDEX_DIR
+
+    @property
+    @wrap_load
+    def ARCHIVED_DOMAINS(self):
+        return self._ARCHIVED_DOMAINS
 
 
 Configuration = _Configuration()
