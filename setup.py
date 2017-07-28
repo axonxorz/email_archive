@@ -31,7 +31,8 @@ setup(
     data_files=[],
     entry_points=dict(
         console_scripts=[
-            'email-archive-message=email_archive.archive:main'
+            'email-archive-message=email_archive.archive:main',
+            'email-index-daemon=email_archive.index_daemon:main'
         ]
     ),
 )

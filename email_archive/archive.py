@@ -9,10 +9,12 @@ import datetime
 import tempfile
 import hashlib
 from gzip import open as gzip_open
-
 import logging
 
+import redis
+
 from .config import Configuration
+from .fifo import FIFOQueue
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,8 @@ def archive_message(message):
         return None
 
     if do_archive:
+        conn = redis.StrictRedis.from_url(Configuration.REDIS_URL)
+        queue = FIFOQueue('email-archive', conn)
         archive_date = message['Date']
         if archive_date is not None:
             archive_date = email.utils.parsedate(archive_date)
@@ -75,6 +79,8 @@ def archive_message(message):
         logger.debug('Archiving to {}'.format(archive_path))
         with gzip_open(archive_path, 'wb') as fd:
             fd.write(str(message))
+
+        queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'))
 
         return archive_path
 
