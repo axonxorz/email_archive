@@ -8,7 +8,7 @@ import time
 import datetime
 import tempfile
 import hashlib
-from gzip import open as gzip_open
+from gzip import GzipFile
 import logging
 
 import redis
@@ -77,8 +77,10 @@ def archive_message(message):
         hash_id = hashlib.md5(message_id).hexdigest()
         archive_path = os.path.join(archive_path, messagetime + '-' + hash_id + '.eml.gz')
         logger.debug('Archiving to {}'.format(archive_path))
-        with gzip_open(archive_path, 'wb') as fd:
-            fd.write(str(message))
+        with open(archive_path, 'wb') as fd:
+            gz = GzipFile(fileobj=fd)
+            gz.write(str(message))
+            gz.close()
 
         queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'))
 
