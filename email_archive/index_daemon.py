@@ -73,8 +73,6 @@ def loop():
             # Fetched item is a path relative to Configuration.ARCHIVE_DIR
             file_path = os.path.join(Configuration.ARCHIVE_DIR, item)
             message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')  # Just in case the item spec changes
-            print file_path
-            print message_path
 
             fd = None
             try:
