@@ -7,7 +7,7 @@ from gzip import open as gzip_open
 from email.parser import Parser
 
 import redis
-from whoosh.writing import BufferedWriter
+from whoosh.writing import AsyncWriter
 
 from .config import Configuration
 from .fifo import FIFOQueue
@@ -22,12 +22,10 @@ POP_TIMEOUT = 5
 
 
 ix = None
-writer = None
 
 def configure_index():
-    global ix, writer
+    global ix
     ix = index.get_index()
-    writer = BufferedWriter(ix)
 
 _pool = None
 def configure_pool():
@@ -47,9 +45,6 @@ def main():
         loop()
     except KeyboardInterrupt:
         print '\nExiting by user request.\n'
-        if writer:
-            writer.commit()
-            writer.close()
         sys.exit(0)
 
 def loop():
@@ -81,7 +76,9 @@ def loop():
                 else:
                     fd = open(file_path, 'rb')
                 message = message_parser.parse(fd)
+                writer = AsyncWriter(index=ix, delay=0.10)
                 index.process_message(message_path, message, writer)
+                writer.commit()
             except Exception, e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
                 continue

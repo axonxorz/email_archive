@@ -73,7 +73,7 @@ def process_message(message_path, message, writer):
             try:
                 body_text = body_text.decode('utf8')
             except UnicodeDecodeError, e:
-                logger.warn(file_path)
+                logger.warn(message_path)
                 logger.warn('No charset specified, and could not decode body_text as UTF-8, skipping message')
                 logger.warn('Error: {}'.format(e))
                 return
