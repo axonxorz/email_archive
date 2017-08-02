@@ -1,7 +1,7 @@
 import os
 import email.utils
 import email.parser
-from gzip import open as gzip_open
+from gzip import GzipFile
 
 import arrow
 
@@ -18,10 +18,7 @@ def msg_from_hit(hit):
     parser = email.parser.Parser()
     fd = None
     try:
-        if path.endswith('.gz'):
-            fd = gzip_open(path, 'rb')
-        else:
-            fd = open(path, 'rb')
+        fd = open(path, 'rb')
         return parser.parse(fd)
     finally:
         if fd:
@@ -61,3 +58,14 @@ def email_has_attachments(message):
         found = True
 
     return found
+
+open_real = open  # We will shadow the original open shortly
+def open(path, mode='rb'):
+    """Transparently open regular and Gzipped files"""
+    fd = open_real(path, mode)
+    if fd.read(2) == '\x1f\x8b':
+        fd.seek(0)
+        return GzipFile(fileobj=fd)
+    else:
+        fd.seek(0)
+        return fd

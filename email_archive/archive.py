@@ -7,9 +7,9 @@ import email.parser
 import time
 import datetime
 import tempfile
-import hashlib
-from gzip import GzipFile
+from gzip import open as gzip_open
 import logging
+import uuid
 
 import redis
 
@@ -74,13 +74,11 @@ def archive_message(message):
                 raise Exception('Unable to create directories')
 
         messagetime = archive_date.strftime('%H%M')
-        hash_id = hashlib.md5(message_id).hexdigest()
+        hash_id = str(uuid.uuid4())
         archive_path = os.path.join(archive_path, messagetime + '-' + hash_id + '.eml.gz')
         logger.debug('Archiving to {}'.format(archive_path))
-        with open(archive_path, 'wb') as fd:
-            gz = GzipFile(fileobj=fd)
-            gz.write(str(message))
-            gz.close()
+        with gzip_open(archive_path, 'wb') as fd:
+            fd.write(str(message))
 
         queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'))
 

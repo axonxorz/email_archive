@@ -12,6 +12,7 @@ from whoosh.writing import AsyncWriter
 from .config import Configuration
 from .fifo import FIFOQueue
 from . import index
+from . import utils
 
 
 logger = logging.getLogger(__name__)
@@ -71,10 +72,7 @@ def loop():
 
             fd = None
             try:
-                if file_path.endswith('.gz'):
-                    fd = gzip_open(file_path, 'rb')
-                else:
-                    fd = open(file_path, 'rb')
+                fd = utils.open(file_path, 'rb')
                 message = message_parser.parse(fd)
                 writer = AsyncWriter(index=ix, delay=0.10)
                 index.process_message(message_path, message, writer)
