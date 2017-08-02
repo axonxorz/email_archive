@@ -10,7 +10,7 @@ from gzip import open as gzip_open
 
 import bleach
 import whoosh.index
-from whoosh.writing import BufferedWriter
+from whoosh.writing import BufferedWriter, IndexingError, LockError
 
 from .config import Configuration
 from .email_schema import email_schema
@@ -106,25 +106,38 @@ def update_index(subtree=None):
         if subtree:
             tree_root = os.path.join(tree_root, subtree)
         documents_path = Configuration.ARCHIVE_DIR
+        run_update = True
         for root, dirs, files in os.walk(tree_root):
+            if not run_update:
+                break
             for filename in files:
-                file_path = os.path.join(root, filename)
-                message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')
-
-                fd = None
-                try:
-                    if file_path.endswith('.gz'):
-                        fd = gzip_open(file_path, 'rb')
-                    else:
-                        fd = open(file_path, 'rb')
-                    message = message_parser.parse(fd)
-                    process_message(message_path, message, writer)
-                except Exception, e:
-                    logger.exception('Unhandled exception processing {}'.format(file_path))
-                    continue
-                finally:
-                    if fd:
-                        fd.close()
+                try_num = 1
+                while try_num < 10:
+                    file_path = os.path.join(root, filename)
+                    message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')
+                    fd = None
+                    try:
+                        if file_path.endswith('.gz'):
+                            fd = gzip_open(file_path, 'rb')
+                        else:
+                            fd = open(file_path, 'rb')
+                        message = message_parser.parse(fd)
+                        process_message(message_path, message, writer)
+                        break  # exit the retry loop
+                    except LockError:
+                        logger.warn('Lock error: {}'.format(file_path))
+                        time.sleep(0.1)
+                        continue  # retry this loop
+                    except IndexingError, e:
+                        logger.exception('Indexing error: {}'.format(file_path))
+                        raise e  # stop all indexing operations
+                    except Exception, e:
+                        logger.exception('Unhandled exception processing {}'.format(file_path))
+                        break  # skip this file
+                    finally:
+                        if fd:
+                            fd.close()
+                        try_num += 1
 
     finally:
         writer.commit()
