@@ -23,6 +23,6 @@ def update_index():
 
     index.update_index(subtree=subtree)
 
-if __name__ == '__main__':
-    update_index()
 
+if __name__ == '__main__':
+    pass

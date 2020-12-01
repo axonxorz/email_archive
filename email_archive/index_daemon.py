@@ -10,8 +10,8 @@ import redis
 
 from .config import Configuration
 from .fifo import FIFOQueue
-from . import index
-from . import utils
+from . import indexer
+from . import message_utils
 
 
 logger = logging.getLogger(__name__)

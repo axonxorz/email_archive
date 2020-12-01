@@ -27,14 +27,12 @@ class _Configuration(object):
     _loaded = False
 
     _ARCHIVE_DIR = None
-    _INDEX_DIR = None
     _ARCHIVED_DOMAINS = None
     _REDIS_URL = None
 
     def configure(self):
         """Attempt to configure the application using various configuration paths"""
         paths = [os.path.join(os.getcwd(), 'email_archive.yml'),
-                os.path.expanduser('~/.email_archive.yml'),
                 '/etc/email_archive.yml']
         for path in paths:
             if os.path.isfile(path):
@@ -45,7 +43,6 @@ class _Configuration(object):
         with open(path, 'rb') as fd:
             conf = yaml.load(fd)
         self._ARCHIVE_DIR = conf['main']['archive_dir']
-        self._INDEX_DIR = conf['main']['index_dir']
         self._ARCHIVED_DOMAINS = conf['main'].get('archived_domains', [])
         self._REDIS_URL = conf['main'].get('redis_url', 'redis://localhost:6379/0')
         self._loaded = path
@@ -60,11 +57,6 @@ class _Configuration(object):
     @wrap_load
     def ARCHIVE_DIR(self):
         return self._ARCHIVE_DIR
-
-    @property
-    @wrap_load
-    def INDEX_DIR(self):
-        return self._INDEX_DIR
 
     @property
     @wrap_load

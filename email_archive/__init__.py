@@ -1,7 +1,6 @@
 import logging
 
 from . import config
-from .index import create_index
 
 
 # Versioneer-generated, do not modify
