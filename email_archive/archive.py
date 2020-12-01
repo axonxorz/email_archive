@@ -34,7 +34,7 @@ def check_archived_domain(addresses):
                 return True
 
 
-def archive_message(message):
+def archive_message(message, priority=2):
     """Parse an email.Message object and archive it if eligible"""
     do_archive = False
 
@@ -50,8 +50,8 @@ def archive_message(message):
         return None
 
     if do_archive:
-        conn = redis.StrictRedis.from_url(Configuration.REDIS_URL)
-        queue = FIFOQueue('email-archive', conn)
+        conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+        queue = FIFOQueue(Configuration.REDIS['queue'], conn)
         archive_date = message['Date']
         if archive_date is not None:
             archive_date = email.utils.parsedate(archive_date)
@@ -80,7 +80,7 @@ def archive_message(message):
         with gzip_open(archive_path, 'w') as fd:
             fd.write(str(message).encode('utf8'))
 
-        queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'))
+        queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'), priority=priority)
 
         return archive_path
 

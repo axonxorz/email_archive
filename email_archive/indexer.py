@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import base64
 import quopri
@@ -168,10 +169,16 @@ class Indexer:
         message_index_body['@timestamp'] = msg_date.naive
 
         index_name = self.get_index_name(msg_date)
+        document_id_parts = [message_id,
+                             ';'.join(msg_from),
+                             ';'.join(msg_to),
+                             msg_subject]
+        document_id_parts = ''.join(document_id_parts).encode('utf8')
+        document_id = hashlib.sha256(document_id_parts).hexdigest()
 
         def _try_index():
             self.es.index(index=index_name,
-                          id=message_id,
+                          id=document_id,
                           body=message_index_body)
 
         try:

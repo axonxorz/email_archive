@@ -29,7 +29,7 @@ class _Configuration(object):
     _ARCHIVE_DIR = None
     _ARCHIVED_DOMAINS = None
     _ELASTIC = None
-    _REDIS_URL = None
+    _REDIS = None
 
     def configure(self):
         """Attempt to configure the application using various configuration paths"""
@@ -46,7 +46,7 @@ class _Configuration(object):
         self._ARCHIVE_DIR = conf['main']['archive_dir']
         self._ARCHIVED_DOMAINS = conf['main'].get('archived_domains', [])
         self._ELASTIC = conf['main'].get('elastic', {})
-        self._REDIS_URL = conf['main'].get('redis_url', 'redis://localhost:6379/0')
+        self._REDIS = conf['main'].get('redis', {})
         self._loaded = path
 
     def __repr__(self):
@@ -72,8 +72,8 @@ class _Configuration(object):
 
     @property
     @wrap_load
-    def REDIS_URL(self):
-        return self._REDIS_URL
+    def REDIS(self):
+        return self._REDIS
 
 
 Configuration = _Configuration()

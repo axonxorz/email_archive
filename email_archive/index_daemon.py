@@ -24,7 +24,7 @@ _pool = None
 def configure_pool():
     """Configure a redis ConnectionPool"""
     global _pool
-    _pool = redis.ConnectionPool.from_url(Configuration.REDIS_URL)
+    _pool = redis.ConnectionPool.from_url(Configuration.REDIS['url'])
 
 
 def connect():
@@ -50,7 +50,7 @@ def loop():
         try:
             if not conn:
                 conn = connect()
-                queue = FIFOQueue('email-archive', conn)
+                queue = FIFOQueue(Configuration.REDIS['queue'], conn)
                 continue  # loop again
 
             item = queue.pop(timeout=POP_TIMEOUT)
