@@ -1,8 +1,34 @@
 import os
 import sys
+import email
+import email.utils
+import email.parser
 
-from . import index
+import click
+
+from . import archive
+from . import indexer
+from . import index_daemon
 from .config import Configuration
+
+
+@click.group()
+def main():
+    pass
+
+
+@main.command()
+@click.option('--path', required=False)
+def archive_message(path=None):
+    if path is None:
+        str_message = sys.stdin.read()
+    else:
+        with open(path) as fd:
+            str_message = fd.read()
+
+    parser = email.parser.HeaderParser()
+    message = parser.parsestr(str_message)
+    archive.archive_message(message)
 
 
 def update_index():
@@ -25,4 +51,4 @@ def update_index():
 
 
 if __name__ == '__main__':
-    pass
+    main()
