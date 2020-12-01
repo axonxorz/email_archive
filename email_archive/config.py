@@ -28,6 +28,7 @@ class _Configuration(object):
 
     _ARCHIVE_DIR = None
     _ARCHIVED_DOMAINS = None
+    _ELASTIC = None
     _REDIS_URL = None
 
     def configure(self):
@@ -44,6 +45,7 @@ class _Configuration(object):
             conf = yaml.load(fd, Loader=yaml.SafeLoader)
         self._ARCHIVE_DIR = conf['main']['archive_dir']
         self._ARCHIVED_DOMAINS = conf['main'].get('archived_domains', [])
+        self._ELASTIC = conf['main'].get('elastic', {})
         self._REDIS_URL = conf['main'].get('redis_url', 'redis://localhost:6379/0')
         self._loaded = path
 
@@ -62,6 +64,11 @@ class _Configuration(object):
     @wrap_load
     def ARCHIVED_DOMAINS(self):
         return self._ARCHIVED_DOMAINS
+
+    @property
+    @wrap_load
+    def ELASTIC(self):
+        return self._ELASTIC
 
     @property
     @wrap_load

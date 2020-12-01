@@ -4,3 +4,4 @@ html5lib==1.1
 pyyaml==5.3.1
 redis==3.5.3
 click==7.1.2
+elasticsearch==7.10.0
