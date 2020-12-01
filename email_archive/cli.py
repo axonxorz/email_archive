@@ -1,7 +1,7 @@
 import os
 import sys
 
-import index
+from . import index
 from .config import Configuration
 
 
@@ -17,9 +17,9 @@ def update_index():
         archive_dir = Configuration.ARCHIVE_DIR
         subtree_real = os.path.realpath(os.path.join(os.getcwd(), subtree))
         if not subtree_real.startswith(archive_dir):
-            print 'Path {} is not within archive: {}'.format(subtree_real, archive_dir)
+            print('Path {} is not within archive: {}'.format(subtree_real, archive_dir))
             sys.exit(1)
-        print subtree_real
+        print(subtree_real)
 
     index.update_index(subtree=subtree)
 

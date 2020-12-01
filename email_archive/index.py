@@ -61,7 +61,7 @@ def process_message(message_path, message, writer):
         if charset is not None:
             try:
                 body_text = body_text.decode(charset)
-            except UnicodeDecodeError, e:
+            except UnicodeDecodeError as e:
                 logger.warn('Could not encode body_text as unicode: {}'.format(e))
                 logger.warn('Message likely has incorrect charset specified, falling back to safe conversion')
                 logger.warn('Context: {}'.format(body_text[e.start-20:e.end+20]))
@@ -72,7 +72,7 @@ def process_message(message_path, message, writer):
             # or fail indexing with a warning
             try:
                 body_text = body_text.decode('utf8')
-            except UnicodeDecodeError, e:
+            except UnicodeDecodeError as e:
                 logger.warn(message_path)
                 logger.warn('No charset specified, and could not decode body_text as UTF-8, skipping message')
                 logger.warn('Error: {}'.format(e))
@@ -89,7 +89,7 @@ def process_message(message_path, message, writer):
                            path=message_path.decode('utf8'),
                            from_addr=msg_from.decode('utf8'),
                            to_addr=msg_to.decode('utf8'),
-                           has_attachments=msg_has_attachments and u'yes' or u'no',
+                           has_attachments=msg_has_attachments and 'yes' or 'no',
                            date=msg_date,
                            subject=msg_subject.decode('utf8'),
                            body=body_text)
@@ -128,10 +128,10 @@ def update_index(subtree=None):
                         logger.warn('Lock error: {}'.format(file_path))
                         time.sleep(0.1)
                         continue  # retry this loop
-                    except IndexingError, e:
+                    except IndexingError as e:
                         logger.exception('Indexing error: {}'.format(file_path))
                         raise e  # stop all indexing operations
-                    except Exception, e:
+                    except Exception as e:
                         logger.exception('Unhandled exception processing {}'.format(file_path))
                         break  # skip this file
                     finally:

@@ -45,7 +45,7 @@ def main():
     try:
         loop()
     except KeyboardInterrupt:
-        print '\nExiting by user request.\n'
+        print('\nExiting by user request.\n')
         sys.exit(0)
 
 def loop():
@@ -77,7 +77,7 @@ def loop():
                 writer = AsyncWriter(index=ix, delay=0.10)
                 index.process_message(message_path, message, writer)
                 writer.commit()
-            except Exception, e:
+            except Exception as e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
                 continue
             finally:
@@ -85,7 +85,7 @@ def loop():
                     fd.close()
 
             continue  # loop again without wait
-        except redis.RedisError, e:
+        except redis.RedisError as e:
             conn = queue = None
             logger.exception('RedisError', e)
             time.sleep(RECONNECT_INTERVAL)

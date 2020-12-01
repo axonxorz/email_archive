@@ -68,7 +68,7 @@ def archive_message(message):
                                     '{}{}'.format(archive_date.strftime('%H'), str(minute).zfill(2)))
         try:
             os.makedirs(archive_path)
-        except OSError, e:
+        except OSError as e:
             # Ignore EEXIST
             if e.errno != 17:
                 raise Exception('Unable to create directories')

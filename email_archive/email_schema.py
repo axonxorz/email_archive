@@ -1,7 +1,7 @@
 from whoosh.fields import *
 from whoosh.analysis import StemmingAnalyzer
 
-from analyzers import EmailAddressAnalyzer
+from .analyzers import EmailAddressAnalyzer
 
 
 email_schema = Schema(message_id=ID(stored=True, unique=True),
