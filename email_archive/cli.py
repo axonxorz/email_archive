@@ -8,7 +8,7 @@ import click
 
 from . import archive
 from . import indexer
-from . import index_daemon
+from . import index_daemon as daemon_module
 from .config import Configuration
 
 
@@ -29,6 +29,11 @@ def archive_message(path=None):
     parser = email.parser.HeaderParser()
     message = parser.parsestr(str_message)
     archive.archive_message(message)
+
+
+@main.command()
+def index_daemon():
+    daemon_module.run()
 
 
 def update_index():

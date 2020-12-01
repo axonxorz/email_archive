@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import logging
-from gzip import open as gzip_open
 from email.parser import Parser
 
 import redis
@@ -21,12 +20,6 @@ RECONNECT_INTERVAL = 5.0
 POP_TIMEOUT = 5
 
 
-ix = None
-
-def configure_index():
-    global ix
-    ix = index.get_index()
-
 _pool = None
 def configure_pool():
     """Configure a redis ConnectionPool"""
@@ -38,8 +31,7 @@ def connect():
     return redis.StrictRedis(connection_pool=_pool)
 
 
-def main():
-    configure_index()
+def run():
     configure_pool()
     try:
         loop()
@@ -47,9 +39,11 @@ def main():
         print('\nExiting by user request.\n')
         sys.exit(0)
 
+
 def loop():
     message_parser = Parser()
     archive_root = Configuration.ARCHIVE_DIR
+    idx = indexer.Indexer()
     conn = None
     queue = None
     while True:
@@ -65,17 +59,18 @@ def loop():
                 time.sleep(SLEEP_INTERVAL)
                 continue
 
+            # Comes from redis as binary
+            item = item.decode('utf8')
+
             # Fetched item is a path relative to Configuration.ARCHIVE_DIR
             file_path = os.path.join(Configuration.ARCHIVE_DIR, item)
             message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')  # Just in case the item spec changes
 
             fd = None
             try:
-                fd = utils.open(file_path, 'rb')
-                message = message_parser.parse(fd)
-                writer = AsyncWriter(index=ix, delay=0.10)
-                index.process_message(message_path, message, writer)
-                writer.commit()
+                fd = message_utils.gz_open(file_path)
+                message = message_parser.parsestr(fd.read().decode('utf8'))
+                idx.process_message(message_path, message)
             except Exception as e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
                 continue
