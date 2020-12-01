@@ -7,7 +7,6 @@ from gzip import open as gzip_open
 from email.parser import Parser
 
 import redis
-from whoosh.writing import AsyncWriter
 
 from .config import Configuration
 from .fifo import FIFOQueue

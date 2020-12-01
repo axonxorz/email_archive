@@ -4,9 +4,7 @@ import os
 import email
 import email.utils
 import email.parser
-import time
 import datetime
-import tempfile
 from gzip import open as gzip_open
 import logging
 import uuid

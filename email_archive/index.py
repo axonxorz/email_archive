@@ -9,11 +9,8 @@ import logging
 from gzip import open as gzip_open
 
 import bleach
-import whoosh.index
-from whoosh.writing import BufferedWriter, IndexingError, LockError
 
 from .config import Configuration
-from .email_schema import email_schema
 from .utils import emaildate_to_arrow, email_get_body, email_has_attachments
 
 
@@ -21,18 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_index():
-    if not os.path.exists(Configuration.INDEX_DIR):
-        os.mkdir(Configuration.INDEX_DIR)
-    if whoosh.index.exists_in(Configuration.INDEX_DIR):
-        logger.warn('Index already exists in {}, refusing to clear it.'.format(Configuration.INDEX_DIR))
-        return False
-    ix = whoosh.index.create_in(Configuration.INDEX_DIR, email_schema)
-    logger.info('Created index in {}'.format(Configuration.INDEX_DIR))
-    return True
-
-
-def get_index():
-    return whoosh.index.open_dir(Configuration.INDEX_DIR)
+    raise NotImplementedError()
 
 
 def process_message(message_path, message, writer):
@@ -94,51 +80,3 @@ def process_message(message_path, message, writer):
                            subject=msg_subject.decode('utf8'),
                            body=body_text)
     logger.info('Indexed {}'.format(message_id))
-
-
-def update_index(subtree=None):
-    message_parser = Parser()
-    ix = get_index()
-
-    writer = BufferedWriter(ix, limit=50)
-    try:
-        tree_root = Configuration.ARCHIVE_DIR
-        if subtree:
-            tree_root = os.path.join(tree_root, subtree)
-        documents_path = Configuration.ARCHIVE_DIR
-        run_update = True
-        for root, dirs, files in os.walk(tree_root):
-            if not run_update:
-                break
-            for filename in files:
-                try_num = 1
-                while try_num < 10:
-                    file_path = os.path.join(root, filename)
-                    message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')
-                    fd = None
-                    try:
-                        if file_path.endswith('.gz'):
-                            fd = gzip_open(file_path, 'rb')
-                        else:
-                            fd = open(file_path, 'rb')
-                        message = message_parser.parse(fd)
-                        process_message(message_path, message, writer)
-                        break  # exit the retry loop
-                    except LockError:
-                        logger.warn('Lock error: {}'.format(file_path))
-                        time.sleep(0.1)
-                        continue  # retry this loop
-                    except IndexingError as e:
-                        logger.exception('Indexing error: {}'.format(file_path))
-                        raise e  # stop all indexing operations
-                    except Exception as e:
-                        logger.exception('Unhandled exception processing {}'.format(file_path))
-                        break  # skip this file
-                    finally:
-                        if fd:
-                            fd.close()
-                        try_num += 1
-
-    finally:
-        writer.commit()
-        writer.close()

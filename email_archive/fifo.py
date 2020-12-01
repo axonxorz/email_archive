@@ -1,6 +1,3 @@
-import redis
-
-
 class FIFOQueue(object):
 
     queue_length = None
