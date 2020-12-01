@@ -41,7 +41,7 @@ class _Configuration(object):
 
     def read_conf(self, path):
         with open(path, 'rb') as fd:
-            conf = yaml.load(fd)
+            conf = yaml.load(fd, Loader=yaml.SafeLoader)
         self._ARCHIVE_DIR = conf['main']['archive_dir']
         self._ARCHIVED_DOMAINS = conf['main'].get('archived_domains', [])
         self._REDIS_URL = conf['main'].get('redis_url', 'redis://localhost:6379/0')
