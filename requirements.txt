@@ -1,7 +1,5 @@
-arrow==0.10.0
-bleach==2.0.0
-html5lib==0.999999999
-ipython
-Whoosh==2.7.4
-pyyaml==3.12
-redis==2.10.5
+arrow==0.17.0
+bleach==3.2.1
+html5lib==1.1
+pyyaml==5.3.1
+redis==3.5.3
