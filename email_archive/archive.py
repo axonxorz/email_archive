@@ -5,6 +5,7 @@ import email
 import email.utils
 import email.parser
 import datetime
+import hashlib
 from gzip import open as gzip_open
 import logging
 import uuid
@@ -44,7 +45,8 @@ def archive_message(message):
             if check_archived_domain(addresses):
                 do_archive = True
     else:
-        logger.debug('No Message-ID, skipping archiving')
+        logger.debug('No Message-ID, duplicate checking unavailable')
+        message_id = uuid.uuid4()
         return None
 
     if do_archive:
@@ -72,11 +74,11 @@ def archive_message(message):
                 raise Exception('Unable to create directories')
 
         messagetime = archive_date.strftime('%H%M')
-        hash_id = str(uuid.uuid4())
+        hash_id = hashlib.sha256(message_id.encode('utf8')).hexdigest()
         archive_path = os.path.join(archive_path, messagetime + '-' + hash_id + '.eml.gz')
         logger.debug('Archiving to {}'.format(archive_path))
-        with gzip_open(archive_path, 'wb') as fd:
-            fd.write(str(message))
+        with gzip_open(archive_path, 'w') as fd:
+            fd.write(str(message).encode('utf8'))
 
         queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'))
 
