@@ -4,6 +4,7 @@ import email
 import email.utils
 import email.parser
 import logging
+import time
 from pathlib import Path
 
 import click
@@ -65,6 +66,40 @@ def bulk_index(path):
             path_to_index = str(full_file_path).replace(str(archive_dir), '').lstrip('/')
             queue.push(path_to_index, priority=3)
             logger.info('Queueing indexing of {}'.format(full_file_path))
+
+
+@main.command()
+@click.option('--monitor/--no-monitor', default=False)
+def queue_length(monitor=False):
+    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+    if not monitor:
+        for priority in queue.priorities:
+            print('{}:{} len={}'.format(queue.queue_name, priority, queue.queue_length(priority)))
+    else:
+        try:
+            INTERVAL = 5
+            state = {}
+            last = {}
+            first = True
+            while True:
+                for priority in queue.priorities:
+                    last[priority] = state.get(priority, 0)
+                    state[priority] = queue.queue_length(priority)
+                    if not first:
+                        change = state[priority] - last[priority]
+                        if change != 0:
+                            rate = round(change/INTERVAL)
+                        else:
+                            rate = 0
+                    else:
+                        change = 0
+                        rate = 0
+                    print('{}:{} len={} change={} rate={}'.format(queue.queue_name, priority, state[priority], change, rate))
+                time.sleep(INTERVAL)
+                first = False
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == '__main__':
