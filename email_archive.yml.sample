@@ -1,0 +1,14 @@
+main:
+    archive_dir: /path/to/archive
+    elastic:
+        hosts: ["elastic.example.ca"]
+        scheme: https
+        port: "9200"
+        http_auth: ["username", "password"]
+        verify_certs: false
+    archived_domains:
+        - example.com
+        - example2.com
+    redis:
+        url: redis://127.0.0.1/0
+        queue: email-index
