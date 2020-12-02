@@ -3,17 +3,24 @@ import sys
 import email
 import email.utils
 import email.parser
+import logging
+from pathlib import Path
 
 import click
+import redis
 
 from . import archive
-from . import indexer
 from . import index_daemon as daemon_module
+from .fifo import FIFOQueue
 from .config import Configuration
+
+
+logger = logging.getLogger(__name__)
 
 
 @click.group()
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     pass
 
 
@@ -36,23 +43,28 @@ def index_daemon():
     daemon_module.run()
 
 
-def update_index():
-    """Update the index or a subtree of the index in the current process"""
+@main.command()
+@click.argument('path')
+def bulk_index(path):
+    """Update the index or a subtree of the index in bulk"""
+    # Check that the subtree is actually contained within the index path
+    archive_dir = Path(Configuration.ARCHIVE_DIR)
+    path = Path(path).absolute()
     try:
-        subtree = sys.argv[1]
-    except IndexError:
-        subtree = None
+        path.relative_to(archive_dir)
+    except ValueError:
+        logger.warning('Specified path {} is not within archive: {}'.format(path, archive_dir))
+        sys.exit(1)
 
-    if subtree is not None:
-        # Check that the subtree is actually contained within the index path
-        archive_dir = Configuration.ARCHIVE_DIR
-        subtree_real = os.path.realpath(os.path.join(os.getcwd(), subtree))
-        if not subtree_real.startswith(archive_dir):
-            print('Path {} is not within archive: {}'.format(subtree_real, archive_dir))
-            sys.exit(1)
-        print(subtree_real)
+    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
 
-    index.update_index(subtree=subtree)
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            full_file_path = Path(root) / Path(filename)
+            path_to_index = str(full_file_path).replace(str(archive_dir), '').lstrip('/')
+            queue.push(path_to_index, priority=3)
+            logger.info('Queueing indexing of {}'.format(full_file_path))
 
 
 if __name__ == '__main__':
