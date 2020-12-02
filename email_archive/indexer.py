@@ -170,8 +170,8 @@ class Indexer:
 
         index_name = self.get_index_name(msg_date)
         document_id_parts = [message_id,
-                             ';'.join(msg_from),
-                             ';'.join(msg_to),
+                             ';'.join(msg_from or 'None'),
+                             ';'.join(msg_to or 'None'),
                              msg_subject]
         document_id_parts = ''.join(document_id_parts).encode('utf8')
         document_id = hashlib.sha256(document_id_parts).hexdigest()
