@@ -39,4 +39,4 @@ class FIFOQueue(object):
     def __repr__(self):
         return '<{} "{}" length={}>'.format(self.__class__.__name__,
                                             self.queue_name,
-                                            self.queue_length is not None and self.queue_length or 'unknown')
+                                            self.queue_length())
