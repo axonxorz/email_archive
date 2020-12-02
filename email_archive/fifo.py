@@ -12,7 +12,7 @@ class FIFOQueue(object):
 
         self.priorities = (1, 2, 3)
         self.queues = [self.get_queue(p) for p in self.priorities]
-        logging.info('Setup {} with queues {}'.format(self.__class__.__name__, self.queues))
+        logging.debug('Setup {} with queues {}'.format(self.__class__.__name__, self.queues))
 
     def get_queue(self, priority):
         return '{}:{}'.format(self.queue_name, priority)
