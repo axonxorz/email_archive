@@ -33,8 +33,11 @@ class FIFOQueue(object):
                 item = item[1]
         return item
 
-    def queue_length(self):
-        return sum([self.connection.llen(q) for q in self.queues])
+    def queue_length(self, priority=None):
+        if priority is None:
+            return sum([self.connection.llen(q) for q in self.queues])
+        else:
+            return self.connection.llen(self.get_queue(priority))
 
     def __repr__(self):
         return '<{} "{}" length={}>'.format(self.__class__.__name__,
