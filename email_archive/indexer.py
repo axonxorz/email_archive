@@ -128,32 +128,37 @@ class Indexer:
         msg_to = addr_tokenize(message['To'])
         msg_attachments = email_attachment_details(message)
 
+        has_valid_body = False
         msg_body = email_get_body(message)
         if msg_body is not None:
-            encoding = msg_body.get('Content-Transfer-Encoding')
-            charset = msg_body.get_param('charset')
-            if encoding == 'quoted-printable':
-                body_text = quopri.decodestring(msg_body.get_payload())
-            elif encoding == 'base64':
-                body_text = base64.b64decode(msg_body.get_payload())
-            else:
-                body_text = msg_body.get_payload()
+            content_type = msg_body.get('Content-Type', 'application/octet-stream')
+            if content_type.startswith('text/'):
+                encoding = msg_body.get('Content-Transfer-Encoding')
+                charset = msg_body.get_param('charset')
+                if encoding == 'quoted-printable':
+                    body_text = quopri.decodestring(msg_body.get_payload())
+                elif encoding == 'base64':
+                    body_text = base64.b64decode(msg_body.get_payload())
+                else:
+                    body_text = msg_body.get_payload()
 
-            if isinstance(body_text, bytes):
-                try:
-                    body_text = body_text.decode(charset and charset or 'utf8')
-                except UnicodeDecodeError as e:
-                    logger.warning('Could not encode body_text as unicode: {}'.format(e))
-                    logger.warning('Message likely has incorrect charset specified, falling back to safe conversion')
-                    logger.warning('Context: {}'.format(body_text[e.start-20:e.end+20]))
-                    logger.warning('         ' + '****'*4 + '   ^^^   ' + '****'*4)
-                    body_text = body_text.decode(charset, 'ignore')
+                if isinstance(body_text, bytes):
+                    try:
+                        body_text = body_text.decode(charset and charset or 'utf8')
+                    except UnicodeDecodeError as e:
+                        print(body_text)
+                        logger.warning('Could not encode body_text as unicode: {}'.format(e))
+                        logger.warning('Message likely has incorrect charset specified, falling back to safe conversion')
+                        logger.warning('Context: {}'.format(body_text[e.start-20:e.end+20]))
+                        logger.warning('         ' + '****'*4 + '   ^^^   ' + '****'*4)
+                        body_text = body_text.decode(charset, 'ignore')
 
-            if 'text/html' in msg_body.get('Content-Type', 'application/octet-stream'):
-                body_text = bleach.clean(body_text, tags=[], attributes={}, styles=[], strip=True)
+                if 'text/html' in content_type:
+                    body_text = bleach.clean(body_text, tags=[], attributes={}, styles=[], strip=True)
+                has_valid_body = True
 
-        else:
-            logger.warning('Could not find body for {}, indexing message envelope only'.format(message_id))
+        if not has_valid_body:
+            logger.warning('Could not index message body for {}, indexing envelope only'.format(message_id))
             body_text = None
 
         message_index_body = dict(message_id=message_id,
