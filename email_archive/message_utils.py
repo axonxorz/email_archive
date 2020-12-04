@@ -61,11 +61,13 @@ def email_attachment_details(message):
     Make a best-effort list of attachment filenames and mimetypes,
     return a list of 2-tuples: [(<filename>, <mime>), ...]
     """
-    attachments = []
     if not message.is_multipart():
-        return attachments
+        parts = [message]
+    else:
+        parts = message.walk()
 
-    for part in message.walk():
+    attachments = []
+    for part in parts:
         filename = part.get_filename('unknown.bin')
         content_type = part.get_content_type()
         if 'text/html' in content_type or 'text/plain' in content_type or content_type.startswith('multipart/'):
