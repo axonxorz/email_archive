@@ -47,6 +47,30 @@ def index_daemon(priorities):
 
 
 @main.command()
+@click.option('--priority', default=1)
+@click.argument('path')
+def index_message(path, priority=1):
+    """Index a single message"""
+    # Check that the subtree is actually contained within the index path
+    archive_dir = Path(Configuration.ARCHIVE_DIR)
+    path = Path(path).absolute()
+    try:
+        path.relative_to(archive_dir)
+    except ValueError:
+        logger.warning('Specified path {} is not within archive: {}'.format(path, archive_dir))
+        sys.exit(1)
+
+    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+    if priority not in queue.priorities:
+        logger.warning('Priority level {} does not exist'.format(priority))
+        sys.exit(1)
+
+    logger.info('Queueing indexing of {}'.format(path))
+    queue.push(str(path), priority=priority)
+
+
+@main.command()
 @click.argument('path')
 def bulk_index(path):
     """Update the index or a subtree of the index in bulk"""
