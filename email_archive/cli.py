@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 def main():
     logging.basicConfig(level=logging.INFO)
-    pass
 
 
 @main.command()
@@ -40,8 +39,11 @@ def archive_message(path=None):
 
 
 @main.command()
-def index_daemon():
-    daemon_module.run()
+@click.option('--priorities', multiple=True)
+def index_daemon(priorities):
+    if not priorities:
+        priorities = None
+    daemon_module.run(priorities)
 
 
 @main.command()
@@ -103,4 +105,4 @@ def queue_length(monitor=False):
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

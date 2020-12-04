@@ -6,13 +6,18 @@ logger = logging.getLogger(__name__)
 
 class FIFOQueue(object):
 
-    def __init__(self, queue_name, connection):
+    def __init__(self, queue_name, connection, priorities=None):
         self.queue_name = queue_name
         self.connection = connection
 
         self.priorities = (1, 2, 3)
-        self.queues = [self.get_queue(p) for p in self.priorities]
+        if priorities is not None:
+            self.priorities = priorities
+        self.configure_queues()
         logging.debug('Setup {} with queues {}'.format(self.__class__.__name__, self.queues))
+
+    def configure_queues(self):
+        self.queues = [self.get_queue(p) for p in self.priorities]
 
     def get_queue(self, priority):
         return '{}:{}'.format(self.queue_name, priority)

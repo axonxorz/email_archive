@@ -31,16 +31,16 @@ def connect():
     return redis.StrictRedis(connection_pool=_pool)
 
 
-def run():
+def run(priorities=None):
     configure_pool()
     try:
-        loop()
+        loop(priorities=priorities)
     except KeyboardInterrupt:
         print('\nExiting by user request.\n')
         sys.exit(0)
 
 
-def loop():
+def loop(priorities=None):
     message_parser = Parser()
     archive_root = Configuration.ARCHIVE_DIR
     idx = indexer.Indexer()
@@ -50,7 +50,7 @@ def loop():
         try:
             if not conn:
                 conn = connect()
-                queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+                queue = FIFOQueue(Configuration.REDIS['queue'], conn, priorities=priorities)
                 continue  # loop again
 
             item = queue.pop(timeout=POP_TIMEOUT)
