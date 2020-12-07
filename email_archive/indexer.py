@@ -4,6 +4,7 @@ import base64
 import quopri
 from functools import wraps
 
+import chardet
 import bleach
 import elasticsearch
 from elasticsearch.exceptions import NotFoundError
@@ -147,6 +148,10 @@ class Indexer:
                 # the ones we've often encountered'
                 if charset is not None and 'cp' in charset.lower() and '-' in charset:
                     charset = charset.replace('-', '').lower()
+
+                # Attempt to determine charset with chardet
+                if not isinstance(body_text, str) and charset is None:
+                    charset = chardet.detect(body_text)['encoding']
 
                 if isinstance(body_text, bytes):
                     try:
