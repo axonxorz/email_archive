@@ -104,6 +104,32 @@ def bulk_index(path):
             logger.info('Queueing indexing of {}'.format(full_file_path))
 
 
+@main.group()
+def manage_failed():
+    pass
+
+
+@manage_failed.command()
+@click.option('--priority', default=1)
+def retry(priority=1):
+    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+
+    queue_contents = conn.lrange(queue.get_queue('failed'), 0, -1)
+    logger.info('Retrying {} failed items, priority={}'.format(len(queue_contents), priority))
+    for entry in queue_contents:
+        queue.push(entry, priority=priority)
+
+
+@manage_failed.command()
+def purge():
+    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
+    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+
+    queue_length = conn.llen(queue.get_queue('failed'))
+    logger.info('Purging {} from failed items list'.format(queue_length))
+
+
 @main.command()
 @click.option('--monitor/--no-monitor', default=False)
 def queue_length(monitor=False):
