@@ -1,6 +1,6 @@
-import os
 import email.utils
 import email.parser
+from email.header import Header
 
 import arrow
 
@@ -16,6 +16,9 @@ def addr_tokenize(header_value):
     """
     if header_value is None:
         return None
+    if isinstance(header_value, Header):
+        # Encoding is unknown-8bit, casting to string will encode it to ascii with 'surrogateescape' option
+        header_value = str(header_value)
     values = header_value.split('\r\n')
     values = [x.strip() for x in values]
     values = filter(None, values)
