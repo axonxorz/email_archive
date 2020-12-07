@@ -3,7 +3,7 @@ import os
 import sys
 import time
 import logging
-from email.parser import Parser
+from email.parser import BytesParser
 
 import redis
 
@@ -41,7 +41,7 @@ def run(priorities=None):
 
 
 def loop(priorities=None):
-    message_parser = Parser()
+    message_parser = BytesParser()
     archive_root = Configuration.ARCHIVE_DIR
     idx = indexer.Indexer()
     conn = None
@@ -69,7 +69,7 @@ def loop(priorities=None):
             fd = None
             try:
                 fd = message_utils.gz_open(file_path)
-                message = message_parser.parsestr(fd.read().decode('utf8'))
+                message = message_parser.parsebytes(fd.read())
                 idx.process_message(message_path, message)
             except Exception as e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
