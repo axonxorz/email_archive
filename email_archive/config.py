@@ -24,6 +24,8 @@ def wrap_load(fn):
 class _Configuration(object):
     """Represents the runtime configuration of the application"""
 
+    paths = None
+
     _loaded = False
 
     _ARCHIVE_DIR = None
@@ -31,14 +33,22 @@ class _Configuration(object):
     _ELASTIC = None
     _REDIS = None
 
+    def __init__(self):
+        self.paths = [os.path.join(os.getcwd(), 'email_archive.yml'),
+                      '/etc/email_archive.yml']
+
+    def set_paths(self, paths):
+        """Override default configuration file paths. Raises a ValueError if configuration has already been loaded."""
+        if self._loaded:
+            raise ValueError('Cannot change configuration file paths, configuration already loaded')
+        self.paths = paths
+
     def configure(self):
-        """Attempt to configure the application using various configuration paths"""
-        paths = [os.path.join(os.getcwd(), 'email_archive.yml'),
-                '/etc/email_archive.yml']
-        for path in paths:
+        """Attempt to configure the application using various configuration paths. The first found path is used."""
+        for path in self.paths:
             if os.path.isfile(path):
                 return self.read_conf(path)
-        raise ConfigurationError('No valid configuration found', paths)
+        raise ConfigurationError('No valid configuration found', self.paths)
 
     def read_conf(self, path):
         with open(path, 'rb') as fd:

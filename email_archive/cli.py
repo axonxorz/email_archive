@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def main():
+@click.option('--config', '-c', required=False, help='Configuration .yml file', type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+def main(config=None):
+    if config is not None:
+        Configuration.set_paths([config])
     logging.basicConfig(level=logging.INFO)
 
 
