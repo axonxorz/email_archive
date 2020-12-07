@@ -64,7 +64,7 @@ def loop(priorities=None):
 
             # Fetched item is a path relative to Configuration.ARCHIVE_DIR
             file_path = os.path.join(Configuration.ARCHIVE_DIR, item)
-            message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')  # Just in case the item spec changes
+            message_path = file_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/')
 
             fd = None
             try:
@@ -73,6 +73,8 @@ def loop(priorities=None):
                 idx.process_message(message_path, message)
             except Exception as e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
+                queue.push(item, priority='failed')
+                sys.exit(5)
                 continue
             finally:
                 if fd:

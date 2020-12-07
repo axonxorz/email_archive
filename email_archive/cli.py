@@ -105,8 +105,9 @@ def bulk_index(path):
 def queue_length(monitor=False):
     conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
     queue = FIFOQueue(Configuration.REDIS['queue'], conn)
+    priorities = list(queue.priorities) + ['failed']
     if not monitor:
-        for priority in queue.priorities:
+        for priority in priorities:
             print('{}:{} len={}'.format(queue.queue_name, priority, queue.queue_length(priority)))
     else:
         try:
@@ -115,7 +116,7 @@ def queue_length(monitor=False):
             last = {}
             first = True
             while True:
-                for priority in queue.priorities:
+                for priority in priorities:
                     last[priority] = state.get(priority, 0)
                     state[priority] = queue.queue_length(priority)
                     if not first:
