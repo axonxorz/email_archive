@@ -3,7 +3,9 @@ import logging
 import base64
 import quopri
 from functools import wraps
+import mimetypes
 
+import magic
 import chardet
 import bleach
 import elasticsearch
@@ -157,11 +159,21 @@ class Indexer:
                     try:
                         body_text = body_text.decode(charset and charset or 'utf8')
                     except UnicodeDecodeError as e:
-                        logger.warning('Could not decode body_text as unicode: {}'.format(e))
-                        logger.warning('Message likely has incorrect charset specified, falling back to safe conversion')
-                        logger.warning('Context: {}'.format(body_text[e.start-20:e.end+20]))
-                        logger.warning('         ' + '****'*4 + '   ^^^   ' + '****'*4)
-                        body_text = body_text.decode(charset, 'ignore')
+                        # Try to see if this _might_ not be a "text/*" message part
+                        magic_mime = magic.from_buffer(body_text[:4096], mime=True)
+                        if magic_mime is not None:
+                            maybe_filename = msg_body.get_filename()
+                            if not maybe_filename:
+                                maybe_filename = 'body{}'.format(mimetypes.guess_extension(magic_mime) or '.bin')
+                            msg_attachments.append((maybe_filename, magic_mime))
+                            body_text = ''
+                            logger.warning('Message body was not text/*, instead detected as {}, indexing as attachment "{}"'.format(magic_mime, maybe_filename))
+                        else:
+                            logger.warning('Could not decode body_text as unicode: {}'.format(e))
+                            logger.warning('Message likely has incorrect charset specified, falling back to safe conversion')
+                            logger.warning('Context: {}'.format(body_text[e.start-20:e.end+20]))
+                            logger.warning('         ' + '****'*4 + '   ^^^   ' + '****'*4)
+                            body_text = body_text.decode(charset and charset or 'utf8', 'ignore')
 
                 if 'text/html' in content_type:
                     body_text = bleach.clean(body_text, tags=[], attributes={}, styles=[], strip=True)

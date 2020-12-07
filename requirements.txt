@@ -6,3 +6,4 @@ redis==3.5.3
 click==7.1.2
 elasticsearch==7.10.0
 chardet==3.0.4
+python-magic==0.4.18
