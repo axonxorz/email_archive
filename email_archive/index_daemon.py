@@ -73,7 +73,6 @@ def loop(priorities=None):
             except Exception as e:
                 logger.exception('Unhandled exception processing {}'.format(file_path))
                 queue.push(item, priority='failed')
-                sys.exit(5)
                 continue
             finally:
                 if fd:
