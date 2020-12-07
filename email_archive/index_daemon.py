@@ -42,7 +42,6 @@ def run(priorities=None):
 
 def loop(priorities=None):
     message_parser = BytesParser()
-    archive_root = Configuration.ARCHIVE_DIR
     idx = indexer.Indexer()
     conn = None
     queue = None

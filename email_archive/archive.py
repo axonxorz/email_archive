@@ -18,31 +18,30 @@ from .fifo import FIFOQueue
 
 logger = logging.getLogger(__name__)
 
-ARCHIVE_DIR = Configuration.ARCHIVE_DIR
-ARCHIVED_DOMAINS = [x.lower() for x in Configuration.ARCHIVED_DOMAINS]
 
 
-def check_archived_domain(addresses):
+def check_archived_domain(addresses, domains):
     """Check addresses to see if any of them fall in the archived domain list.
     This is lazy as a matched domain could appear in the local-part of the address
     and trigger a match"""
     if addresses is None: return
     addresses = addresses.lower()
     for address in addresses.split(','):
-        for domain in ARCHIVED_DOMAINS:
+        for domain in domains:
             if domain in address:
                 return True
 
 
 def archive_message(message, priority=2):
     """Parse an email.Message object and archive it if eligible"""
+    archived_domains = [x.lower() for x in Configuration.ARCHIVED_DOMAINS]
     do_archive = False
 
     if 'Message-ID' in message:
         message_id = message['Message-ID']
 
         for addresses in [message.get('To'), message.get('From'), message.get('CC'), message.get('BCC')]:
-            if check_archived_domain(addresses):
+            if check_archived_domain(addresses, archived_domains):
                 do_archive = True
     else:
         logger.debug('No Message-ID, duplicate checking unavailable')
@@ -61,7 +60,7 @@ def archive_message(message, priority=2):
 
         minute = int(archive_date.strftime('%M'))
         minute = minute - (minute % 10)
-        archive_path = os.path.join(ARCHIVE_DIR,
+        archive_path = os.path.join(Configuration.ARCHIVE_DIR,
                                     archive_date.strftime('%Y'),
                                     archive_date.strftime('%m'),
                                     archive_date.strftime('%d'),
@@ -80,7 +79,7 @@ def archive_message(message, priority=2):
         with gzip_open(archive_path, 'w') as fd:
             fd.write(str(message).encode('utf8'))
 
-        queue.push(archive_path.replace(ARCHIVE_DIR, '').lstrip('/'), priority=priority)
+        queue.push(archive_path.replace(Configuration.ARCHIVE_DIR, '').lstrip('/'), priority=priority)
 
         return archive_path
 
