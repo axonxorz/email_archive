@@ -142,12 +142,17 @@ class Indexer:
                 else:
                     body_text = msg_body.get_payload()
 
+                # Certain charsets are provided in a non-"python codecs module"-compliant form. (cp850 can come in
+                # as cp-850, CP-850, Cp-850. Attempt to normalize. This is not tested with all charsets, just
+                # the ones we've often encountered'
+                if charset is not None and 'cp' in charset.lower() and '-' in charset:
+                    charset = charset.replace('-', '').lower()
+
                 if isinstance(body_text, bytes):
                     try:
                         body_text = body_text.decode(charset and charset or 'utf8')
                     except UnicodeDecodeError as e:
-                        print(body_text)
-                        logger.warning('Could not encode body_text as unicode: {}'.format(e))
+                        logger.warning('Could not decode body_text as unicode: {}'.format(e))
                         logger.warning('Message likely has incorrect charset specified, falling back to safe conversion')
                         logger.warning('Context: {}'.format(body_text[e.start-20:e.end+20]))
                         logger.warning('         ' + '****'*4 + '   ^^^   ' + '****'*4)
