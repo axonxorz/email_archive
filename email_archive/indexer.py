@@ -120,7 +120,7 @@ class Indexer:
         if message_id is None:
             logger.warn('Skipping {}, could not find a Message-Id, probably an error parsing'.format(message_path))
             return False
-        msg_subject = message.get('Subject', '')
+        msg_subject = str(message.get('Subject', ''))
         msg_headers = ['{}: {}'.format(x, y) for x, y in message.items()]
         msg_date = emaildate_to_arrow(message['Date'])
         msg_from = addr_tokenize(message['From'])
@@ -184,7 +184,7 @@ class Indexer:
         message_index_body['@timestamp'] = msg_date.naive
 
         index_name = self.get_index_name(msg_date)
-        document_id_parts = [message_id,
+        document_id_parts = [str(message_id),
                              ';'.join(msg_from or 'None'),
                              ';'.join(msg_to or 'None'),
                              msg_subject]
