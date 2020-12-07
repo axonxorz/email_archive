@@ -6,11 +6,14 @@ import email.parser
 import logging
 import time
 from pathlib import Path
+from email.parser import BytesParser
 
 import click
 import redis
 
 from . import archive
+from . import indexer
+from . import message_utils
 from . import index_daemon as daemon_module
 from .fifo import FIFOQueue
 from .config import Configuration
@@ -47,9 +50,8 @@ def index_daemon(priorities):
 
 
 @main.command()
-@click.option('--priority', default=1)
 @click.argument('path')
-def index_message(path, priority=1):
+def index_message(path):
     """Index a single message"""
     # Check that the subtree is actually contained within the index path
     archive_dir = Path(Configuration.ARCHIVE_DIR)
@@ -60,14 +62,18 @@ def index_message(path, priority=1):
         logger.warning('Specified path {} is not within archive: {}'.format(path, archive_dir))
         sys.exit(1)
 
-    conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
-    queue = FIFOQueue(Configuration.REDIS['queue'], conn)
-    if priority not in queue.priorities:
-        logger.warning('Priority level {} does not exist'.format(priority))
-        sys.exit(1)
-
-    logger.info('Queueing indexing of {}'.format(path))
-    queue.push(str(path), priority=priority)
+    fd = None
+    try:
+        message_parser = BytesParser()
+        idx = indexer.Indexer()
+        fd = message_utils.gz_open(path)
+        message = message_parser.parsebytes(fd.read())
+        idx.process_message(str(path), message)
+    except Exception as e:
+        logger.exception('Unhandled exception processing {}'.format(path))
+    finally:
+        if fd:
+            fd.close()
 
 
 @main.command()
