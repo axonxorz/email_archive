@@ -1,9 +1,10 @@
 import os
 import email.utils
 import email.parser
-from gzip import GzipFile
 
 import arrow
+
+from .altgzip import AltGzipFile
 
 
 def addr_tokenize(header_value):
@@ -97,7 +98,7 @@ def gz_open(path):
     fd = open(path, 'rb')
     if fd.read(2) == b'\x1f\x8b':
         fd.seek(0)
-        return GzipFile(fileobj=fd)
+        return AltGzipFile(fileobj=fd)
     else:
         fd.seek(0)
         return fd
