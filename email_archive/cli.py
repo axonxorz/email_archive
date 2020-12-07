@@ -53,30 +53,31 @@ def index_daemon(priorities):
 
 
 @main.command()
-@click.argument('path')
-def index_message(path):
-    """Index a single message"""
+@click.argument('paths', nargs=-1)
+def index_message(paths):
+    """Index messages specified"""
     # Check that the subtree is actually contained within the index path
-    archive_dir = Path(Configuration.ARCHIVE_DIR)
-    path = Path(path).absolute()
-    try:
-        path.relative_to(archive_dir)
-    except ValueError:
-        logger.warning('Specified path {} is not within archive: {}'.format(path, archive_dir))
-        sys.exit(1)
+    for path in paths:
+        archive_dir = Path(Configuration.ARCHIVE_DIR)
+        path = Path(path).absolute()
+        try:
+            path.relative_to(archive_dir)
+        except ValueError:
+            logger.warning('Specified path {} is not within archive: {}'.format(path, archive_dir))
+            continue
 
-    fd = None
-    try:
-        message_parser = BytesParser()
-        idx = indexer.Indexer()
-        fd = message_utils.gz_open(path)
-        message = message_parser.parsebytes(fd.read())
-        idx.process_message(str(path), message)
-    except Exception as e:
-        logger.exception('Unhandled exception processing {}'.format(path))
-    finally:
-        if fd:
-            fd.close()
+        fd = None
+        try:
+            message_parser = BytesParser()
+            idx = indexer.Indexer()
+            fd = message_utils.gz_open(path)
+            message = message_parser.parsebytes(fd.read())
+            idx.process_message(str(path), message)
+        except Exception as e:
+            logger.exception('Unhandled exception processing {}'.format(path))
+        finally:
+            if fd:
+                fd.close()
 
 
 @main.command()
