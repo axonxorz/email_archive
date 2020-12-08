@@ -139,7 +139,12 @@ class Indexer:
                 encoding = msg_body.get('Content-Transfer-Encoding')
                 charset = msg_body.get_param('charset')
                 if encoding == 'quoted-printable':
-                    body_text = quopri.decodestring(msg_body.get_payload())
+                    try:
+                        body_text = quopri.decodestring(msg_body.get_payload())
+                    except ValueError as e:
+                        # Likely non-ascii characters encountered in msg_body.get_payload(), try again by
+                        # stripping them out
+                        body_text = quopri.decodestring(msg_body.get_payload().encode('utf8', 'ignore'))
                 elif encoding == 'base64':
                     body_text = base64.b64decode(msg_body.get_payload())
                 else:
@@ -147,7 +152,7 @@ class Indexer:
 
                 # Certain charsets are provided in a non-"python codecs module"-compliant form. (cp850 can come in
                 # as cp-850, CP-850, Cp-850. Attempt to normalize. This is not tested with all charsets, just
-                # the ones we've often encountered'
+                # the ones we've often encountered
                 if charset is not None and 'cp' in charset.lower() and '-' in charset:
                     charset = charset.replace('-', '').lower()
 
