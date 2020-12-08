@@ -160,6 +160,13 @@ class Indexer:
                 if not isinstance(body_text, str) and charset is None:
                     charset = chardet.detect(body_text)['encoding']
 
+                # Explicitly handle unresolvable charsets
+                charset_maps = {
+                    'WE8ISO8859P1': 'iso8859-1'  # Oracle
+                }
+                if charset in charset_maps:
+                    charset = charset_maps[charset]
+
                 if isinstance(body_text, bytes):
                     try:
                         body_text = body_text.decode(charset and charset or 'utf8')
