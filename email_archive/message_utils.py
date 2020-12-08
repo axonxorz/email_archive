@@ -1,3 +1,5 @@
+import binascii
+import base64
 import email.utils
 import email.parser
 from email.header import Header
@@ -52,6 +54,8 @@ def email_get_body(message):
         text_part = None
         for part in message.walk():
             content_type = part.get('Content-Type', 'application/octet-stream')
+            if isinstance(content_type, Header):
+                content_type = str(content_type)
             if not part.is_multipart():
                 if 'text/html' in content_type:
                     html_part = part
@@ -105,3 +109,14 @@ def gz_open(path):
     else:
         fd.seek(0)
         return fd
+
+
+def safe_b64decode(content):
+    """Attempt to decode a Base64-encoded bytestream. If incorrect padding is encountered, attempt to fix or re-raise."""
+    try:
+        return base64.b64decode(content)
+    except binascii.Error as e:
+        if e.args[0] == 'Incorrect padding':
+            # Try to fix
+            return base64.b64decode(content + '=' * (-len(content) % 4))
+        raise e

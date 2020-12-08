@@ -1,6 +1,5 @@
 import hashlib
 import logging
-import base64
 import quopri
 from functools import wraps
 import mimetypes
@@ -15,7 +14,8 @@ from .message_utils import (
     addr_tokenize,
     emaildate_to_arrow,
     email_get_body,
-    email_attachment_details
+    email_attachment_details,
+    safe_b64decode
 )
 from .config import Configuration
 
@@ -146,7 +146,7 @@ class Indexer:
                         # stripping them out
                         body_text = quopri.decodestring(msg_body.get_payload().encode('utf8', 'ignore'))
                 elif encoding == 'base64':
-                    body_text = base64.b64decode(msg_body.get_payload())
+                    body_text = safe_b64decode(msg_body.get_payload())
                 else:
                     body_text = msg_body.get_payload()
 
