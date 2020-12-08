@@ -126,8 +126,10 @@ def purge():
     conn = redis.StrictRedis.from_url(Configuration.REDIS.get('url'))
     queue = FIFOQueue(Configuration.REDIS['queue'], conn)
 
-    queue_length = conn.llen(queue.get_queue('failed'))
+    list_name = queue.get_queue('failed')
+    queue_length = conn.llen(list_name)
     logger.info('Purging {} from failed items list'.format(queue_length))
+    conn.delete(list_name)
 
 
 @main.command()
